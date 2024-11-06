@@ -3,16 +3,19 @@ import requests
 import csv
 
 class EventHost:
-    def __init__(self, url, name, tag, class_):
+    def __init__(self, url, name, tagName, tagUrl, tagDate):
         self.url = url
         self.name = name
-        self.tag = tag
-        self.class_ = class_
+
+        self.tagName = tagName
+        self.tagUrl = tagUrl
+        self.tagDate = tagDate
 
 class Event:
-    def __init__(self, name, url, host):
+    def __init__(self, name, url, date, host):
         self.name = name
         self.url = url
+        self.date = date
         self.host = host
     def __str__(self):
         return f"{self.name}\n{self.url}\n{self.host}"
@@ -22,9 +25,9 @@ class Scraper:
     def __init__(self):
         self.ScrapedDataList = []
         self.EventHostList = [
-            EventHost("https://arenariga.com/", "ArenaRiga", "h3", "entry-title"),
-            EventHost("https://www.liveriga.com/lv/3-pasakumi?csrf_token=1c1fbf0b3759d89d1dfd9e7259dce78a&dateFrom=06.11.2024&dateTill=", "LiveRiga", "h3", "card-title"),
-            EventHost("https://www.forumcinemas.lv/", "ForumCinemas", "span", "name-part")
+            EventHost("https://arenariga.com/", "ArenaRiga", ("h3", "entry-title"), ("a", "event_href"), ("div", "date"))
+            #EventHost("https://www.liveriga.com/lv/3-pasakumi?csrf_token=1c1fbf0b3759d89d1dfd9e7259dce78a&dateFrom=06.11.2024&dateTill=", "LiveRiga", "h3", "card-title"),
+            #EventHost("https://www.forumcinemas.lv/", "ForumCinemas", "span", "name-part")
         ]
     def ScrapeList(self):
         self.ScrapedDataList = []
@@ -44,9 +47,16 @@ class Formatter:
         for i in range(len(ScrapedDataList)):
             articles = []
             structXML = BeautifulSoup(ScrapedDataList[i], "html.parser")
-            rawArticles = structXML.find_all(EventHostList[i].tag, class_=EventHostList[i].class_)
-            for j in rawArticles:
-                articles.append(Event(j.get_text().strip(), "/url/", EventHostList[i].name))
+
+            
+            names = structXML.find_all(EventHostList[i].tagName[0], class_=EventHostList[i].tagName[1])
+            urls = structXML.find_all(EventHostList[i].tagUrl[0], href=True, class_=EventHostList[i].tagUrl[1])
+            dates = structXML.find_all(EventHostList[i].tagDate[0], class_=EventHostList[i].tagDate[1])
+
+            for j in range(len(names)):
+                article = Event(names[j].get_text().split(), urls[j]["href"], dates[j].get_text().split(), "dont")
+                articles.append(article)
+
             ArticleList.append(articles)
         return ArticleList
 
@@ -63,4 +73,4 @@ if __name__ == "__main__":
         writer = csv.writer(csvfile, delimiter=",")
         for list in events:
             for i in list:
-                writer.writerow([i.name, i.url, i.host])
+                writer.writerow([i.name, i.url, i.date, i.host])
