@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import csv
 
 class EventHost:
     def __init__(self, url, name, tag, class_):
@@ -14,7 +15,7 @@ class Event:
         self.url = url
         self.host = host
     def __str__(self):
-        return f"\n{self.name}\n{self.url}\n{self.host}"
+        return f"{self.name}\n{self.url}\n{self.host}"
 
 class Scraper:
     ScrapedDataList = []
@@ -37,8 +38,8 @@ class Formatter:
         self.scraper = scraper
     def filterArticles(self):
         ArticleList = []
-        EventHostList = scraper.EventHostList
-        ScrapedDataList = scraper.ScrapedDataList
+        EventHostList = self.scraper.EventHostList
+        ScrapedDataList = self.scraper.ScrapedDataList
 
         for i in range(len(ScrapedDataList)):
             articles = []
@@ -51,12 +52,15 @@ class Formatter:
 
 if __name__ == "__main__":
     print("Running as main")
-    scraper = Scraper()
-    formatter = Formatter(scraper=scraper)
+    mainScraper = Scraper()
+    formatter = Formatter(scraper=mainScraper)
 
-    scraper.ScrapeList() # This happens before formatting (procedures instead of functions)
+    mainScraper.ScrapeList() # This happens before formatting (procedures instead of functions)
     events = formatter.filterArticles()
 
-    for i in events:
-        for j in i:
-            print(j)
+    # Exporting to .csv file
+    with open("RigaEvents.csv", "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile, delimiter=",")
+        for list in events:
+            for i in list:
+                writer.writerow([i.name, i.url, i.host])
