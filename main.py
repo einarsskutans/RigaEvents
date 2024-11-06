@@ -21,7 +21,9 @@ class Scraper:
     def __init__(self):
         self.ScrapedDataList = []
         self.EventHostList = [
-            EventHost("https://arenariga.com/", "ArenaRiga", "h3", "entry-title")
+            EventHost("https://arenariga.com/", "ArenaRiga", "h3", "entry-title"),
+            EventHost("https://www.liveriga.com/lv/3-pasakumi?csrf_token=1c1fbf0b3759d89d1dfd9e7259dce78a&dateFrom=06.11.2024&dateTill=", "LiveRiga", "h3", "card-title"),
+            EventHost("https://www.forumcinemas.lv/", "ForumCinemas", "span", "name-part")
         ]
     def ScrapeList(self):
         self.ScrapedDataList = []
@@ -34,13 +36,18 @@ class Formatter:
     def __init__(self, scraper):
         self.scraper = scraper
     def filterArticles(self):
-        articles = []
+        ArticleList = []
         EventHostList = scraper.EventHostList
-        structXML = BeautifulSoup(scraper.ScrapedDataList[0], "html.parser")
-        rawArticles = structXML.find_all(EventHostList[0].tag, class_=EventHostList[0].class_)
-        for i in rawArticles:
-            articles.append(Event(i.get_text().strip(), "/url/", EventHostList[0].name))
-        return articles
+        ScrapedDataList = scraper.ScrapedDataList
+
+        for i in range(len(ScrapedDataList)):
+            articles = []
+            structXML = BeautifulSoup(ScrapedDataList[i], "html.parser")
+            rawArticles = structXML.find_all(EventHostList[i].tag, class_=EventHostList[i].class_)
+            for j in rawArticles:
+                articles.append(Event(j.get_text().strip(), "/url/", EventHostList[i].name))
+            ArticleList.append(articles)
+        return ArticleList
 
 if __name__ == "__main__":
     print("Running as main")
@@ -49,5 +56,7 @@ if __name__ == "__main__":
 
     scraper.ScrapeList() # This happens before formatting (procedures instead of functions)
     events = formatter.filterArticles()
+
     for i in events:
-        print(i)       
+        for j in i:
+            print(j)
