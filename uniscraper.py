@@ -1,29 +1,51 @@
+import time
 from bs4 import BeautifulSoup
 import requests
-import csv
 
 class Host:  # Website
-    def __init__(self, name, url, taglist):
+    def __init__(self, name, url):
         self.name = name
         self.url = url
-
-        self.taglist = taglist
-
         self.ScrapedData = ""
+
     def scrape(self):
         self.ScrapedData = requests.get(self.url).content 
         return self.ScrapedData
     
 class Formatter:
-    def __init__(self, scraper):
-        self.scraper = scraper
+    def __init__(self, host):
+        self.host = host
+        self.structXML = BeautifulSoup(host.ScrapedData, "html.parser")
+    def extract(self, element, _class):
+        data = self.structXML.find_all(element, class_=_class)
+        for i in range(len(data)):
+            data[i] = " ".join(data[i].get_text().split())
+        return data
     
-#names = structXML.find_all(EventHostList[i].tagName[0], class_=EventHostList[i].tagName[1])
-#urls = structXML.find_all(EventHostList[i].tagUrl[0], href=True, class_=EventHostList[i].tagUrl[1])
-#dates = structXML.find_all(EventHostList[i].tagDate[0], class_=EventHostList[i].tagDate[1])
-
+    def extract_list(self, element_list, _class_list):
+        data_list = []
+        for i in range(len(element_list)):
+            data = self.structXML.find_all(element_list[i], _class_list[i])
+            for j in range(len(data)):
+                data[j] = " ".join(data[j].get_text().split())
+            data_list.append(data)
+        return data_list
 
 if __name__ == "__main__":
-    print("Running as uniscraper.py")
-    host1 = Host("ArenaRiga", "https://arenariga.com/", [("h3", "entry-title"), ("a", "event_href"), ("div", "date")])
-    
+    print("\n\nRunning as uniscraper.py\nSee an example below.")
+    host1 = Host("ArenaRiga", "https://arenariga.com/")
+    host1.scrape()
+    new_formatter = Formatter(host1)
+    example_list = new_formatter.extract_list(["h3", "div"], ["entry-title", "date"])
+
+    example_list.append([]) # For third element list split from "date"
+
+    for i in range(len(example_list[1])):
+        date_list = example_list[1]
+        example_list[2].append(date_list[i][date_list[i].find("•")+2:])
+        date_list[i] = date_list[i][:date_list[i].find("•")-1]
+    for i in example_list:
+        time.sleep(1.5)
+        print("---")
+        for j in i:
+            print(j)
