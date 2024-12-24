@@ -6,26 +6,28 @@ class Host:  # Website
     def __init__(self, name, url):
         self.name = name
         self.url = url
-        self.ScrapedData = ""
-
+        self.scraped_data = ""
+  
     def scrape(self):
-        self.ScrapedData = requests.get(self.url).content 
-        return self.ScrapedData
+        self.scraped_data = requests.get(self.url).content 
+        return self.scraped_data
     
 class Formatter:
     def __init__(self, host):
         self.host = host
-        self.structXML = BeautifulSoup(host.ScrapedData, "html.parser")
-    def extract(self, element, _class):
-        data = self.structXML.find_all(element, class_=_class)
+        self.parsed_html = BeautifulSoup(host.scraped_data, "html.parser")
+    def extract(self, element, css_class):
+        data = self.parsed_html.find_all(element, class_=css_class)
         for i in range(len(data)):
             data[i] = " ".join(data[i].get_text().split())
         return data
     
-    def extract_list(self, element_list, _class_list):
+    def extract_list(self, element_list, css_class_list):
+        if len(element_list) != len(css_class_list):
+            raise ValueError("element_list and _class_list must have the same length.")
         data_list = []
         for i in range(len(element_list)):
-            data = self.structXML.find_all(element_list[i], _class_list[i])
+            data = self.parsed_html.find_all(element_list[i], css_class_list[i])
             for j in range(len(data)):
                 data[j] = " ".join(data[j].get_text().split())
             data_list.append(data)
