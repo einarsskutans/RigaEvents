@@ -1,27 +1,38 @@
+# Module uniscraper.py. Built this little thing to make the scraping process for
+# my perhaps future web-scraping projects a bit easier.
+# The formatter takes in css tag and/or class (or a list of them) and formats
+# the raw data from Host class accordingly.
+
 import time
 from bs4 import BeautifulSoup
 import requests
 
-class Host:  # Website
+class Host:  # The website
     def __init__(self, name, url):
         self.name = name
         self.url = url
         self.scraped_data = ""
-  
+        
     def scrape(self):
-        self.scraped_data = requests.get(self.url).content 
-        return self.scraped_data
+        try:
+            response = requests.get(self.url)
+            response.raise_for_status()
+            self.scraped_data = response.content
+            return self.scraped_data
+        except requests.exceptions.RequestException as e:
+            print(f"Error scraping {self.url}: {e}")
+            return None
     
 class Formatter:
     def __init__(self, host):
         self.host = host
         self.parsed_html = BeautifulSoup(host.scraped_data, "html.parser")
+
     def extract(self, element, css_class):
         data = self.parsed_html.find_all(element, class_=css_class)
         for i in range(len(data)):
             data[i] = " ".join(data[i].get_text().split())
         return data
-    
     def extract_list(self, element_list, css_class_list):
         if len(element_list) != len(css_class_list):
             raise ValueError("element_list and _class_list must have the same length.")
@@ -47,7 +58,7 @@ if __name__ == "__main__":
         example_list[2].append(date_list[i][date_list[i].find("•")+2:])
         date_list[i] = date_list[i][:date_list[i].find("•")-1]
     for i in example_list:
-        time.sleep(1.5)
+        time.sleep(1)
         print("---")
         for j in i:
             print(j)
